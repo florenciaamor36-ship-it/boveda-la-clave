@@ -183,6 +183,7 @@ public class MainActivity extends Activity {
     private static class DialView extends View {
         private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);private float angle=0,scale=1f,alpha=1f;private int state=0;private Runnable done;private final Handler h=new Handler(Looper.getMainLooper());
         DialView(Context c){super(c);setLayerType(View.LAYER_TYPE_SOFTWARE,null);}
+        private int dp(float value){return (int)(value*getResources().getDisplayMetrics().density+0.5f);}
         void playError(){state=1;invalidate();h.postDelayed(()->{state=0;invalidate();},900);}
         void playSuccess(Runnable r){state=2;done=r;angle=0;scale=.78f;invalidate();post(new Runnable(){long start=System.currentTimeMillis();public void run(){float t=Math.min(1f,(System.currentTimeMillis()-start)/700f);angle=720*t;scale=.78f+.22f*t;invalidate();if(t<1f)postDelayed(this,16);else{postDelayed(()->{state=0;invalidate();if(done!=null){Runnable x=done;done=null;x.run();}},180);}}});}
         @Override protected void onDraw(Canvas canvas){super.onDraw(canvas);float cx=getWidth()/2f,cy=getHeight()/2f-3;float r=Math.min(dp(88),Math.min(getWidth()/2f-dp(10),getHeight()/2f-dp(27)));if(r<dp(50))r=dp(50);canvas.save();if(state==1){float shake=(float)Math.sin(System.currentTimeMillis()*.08)*dp(5);canvas.translate(shake,0);postInvalidateDelayed(16);}canvas.scale(scale,scale,cx,cy);

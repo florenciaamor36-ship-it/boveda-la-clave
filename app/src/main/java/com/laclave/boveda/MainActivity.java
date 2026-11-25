@@ -66,10 +66,10 @@ public class MainActivity extends Activity {
     private static final int PIN_ITERATIONS = 120000;
     private static final int REQUEST_IMPORT = 2101;
     private static final int COLOR_BG = Color.rgb(8, 11, 18);
-    private static final int COLOR_PANEL = Color.rgb(17, 25, 37);
-    private static final int COLOR_LINE = Color.rgb(41, 57, 73);
-    private static final int COLOR_MINT = Color.rgb(101, 240, 214);
-    private static final int COLOR_MUTED = Color.rgb(146, 162, 180);
+    private static final int COLOR_PANEL = Color.rgb(20, 28, 39);
+    private static final int COLOR_LINE = Color.rgb(65, 75, 87);
+    private static final int COLOR_MINT = Color.rgb(220, 179, 101);
+    private static final int COLOR_MUTED = Color.rgb(157, 169, 181);
     private final SecureRandom random = new SecureRandom();
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable delayedLock = this::lockVault;
@@ -99,6 +99,17 @@ public class MainActivity extends Activity {
         GradientDrawable d = new GradientDrawable(); d.setColor(color); d.setCornerRadius(dp(radius));
         if (stroke != 0) d.setStroke(dp(1), stroke); return d;
     }
+    private android.graphics.drawable.Drawable gradient(int top, int bottom, int stroke, int radius) {
+        GradientDrawable d = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{top, bottom});
+        d.setCornerRadius(dp(radius));
+        if (stroke != 0) d.setStroke(dp(1), stroke);
+        return d;
+    }
+    private TextView microLabel(String value) {
+        TextView t = text(value, 9, Color.rgb(151, 167, 183), true);
+        t.setLetterSpacing(.16f);
+        return t;
+    }
     private TextView text(String value, int size, int color, boolean bold) {
         TextView t = new TextView(this); t.setText(value); t.setTextSize(size); t.setTextColor(color);
         t.setTypeface(Typeface.create("sans-serif", bold ? Typeface.BOLD : Typeface.NORMAL)); return t;
@@ -109,7 +120,7 @@ public class MainActivity extends Activity {
     private LinearLayout.LayoutParams lp(int w,int h) { return new LinearLayout.LayoutParams(w<0?w:dp(w),h<0?h:dp(h)); }
     private Button button(String label, boolean primary) {
         Button b=new Button(this); b.setText(label); b.setAllCaps(false); b.setTextSize(14); b.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
-        b.setTextColor(primary?Color.rgb(7,32,31):Color.rgb(224,235,242)); b.setBackground(rounded(primary?COLOR_MINT:Color.rgb(22,32,45),primary?Color.rgb(140,255,236):COLOR_LINE,14));
+        b.setTextColor(primary?Color.rgb(26,25,22):Color.rgb(225,231,236)); b.setBackground(primary?gradient(Color.rgb(240,209,148),Color.rgb(183,139,65),Color.rgb(255,232,181),14):gradient(Color.rgb(42,51,62),Color.rgb(21,28,37),Color.rgb(71,83,95),14));
         b.setMinHeight(dp(48)); b.setStateListAnimator(null); return b;
     }
     private void buildBase() {
@@ -119,27 +130,73 @@ public class MainActivity extends Activity {
     }
     private void buildBrand() {
         LinearLayout header=row();
-        TextView icon=text("◆",19,Color.rgb(8,36,38),true); icon.setGravity(Gravity.CENTER); icon.setBackground(rounded(COLOR_MINT,0,13)); header.addView(icon,lp(40,40));
-        LinearLayout titles=column(); pad(titles,10,0,0,0); TextView name=text("LA CLAVE",12,Color.rgb(188,202,215),true); name.setLetterSpacing(.16f); titles.addView(name);
-        TextView sub=text("BÓVEDA PRIVADA",9,Color.rgb(116,134,154),true); sub.setLetterSpacing(.2f); titles.addView(sub); header.addView(titles,new LinearLayout.LayoutParams(0,-2,1));
-        TextView secure=text("●  SOLO EN ESTE DISPOSITIVO",9,COLOR_MUTED,true); header.addView(secure); root.addView(header,lp(-1,46));
+        TextView icon=text("⬡",25,Color.rgb(29,24,16),true); icon.setGravity(Gravity.CENTER);
+        icon.setBackground(gradient(Color.rgb(247,218,151),COLOR_MINT,Color.rgb(255,239,197),14));
+        header.addView(icon,lp(48,48));
+        LinearLayout titles=column(); pad(titles,12,0,0,0);
+        TextView name=text("LA CLAVE",14,Color.rgb(242,244,246),true); name.setLetterSpacing(.18f); titles.addView(name);
+        TextView sub=text("PRIVATE VAULT  /  LOCAL",9,Color.rgb(146,161,176),true); sub.setLetterSpacing(.12f); titles.addView(sub);
+        header.addView(titles,new LinearLayout.LayoutParams(0,-2,1));
+        LinearLayout badge=row(); pad(badge,9,7,9,7); badge.setBackground(rounded(Color.rgb(20,35,35),Color.rgb(63,105,96),20));
+        View dot=new View(this); dot.setBackground(rounded(Color.rgb(111,231,183),0,8)); badge.addView(dot,lp(7,7));
+        TextView local=text("  LOCAL",9,Color.rgb(190,222,209),true); badge.addView(local);
+        header.addView(badge); root.addView(header,lp(-1,54));
     }
     private void buildAuthScreen() {
         isUnlocked=false; fileKey=null; buildBase(); buildBrand();
-        TextView eyebrow=text(hasPin()?"ACCESO CIFRADO":"PRIMER USO",10,Color.rgb(140,164,185),true); eyebrow.setLetterSpacing(.22f); eyebrow.setGravity(Gravity.CENTER); LinearLayout.LayoutParams ep=lp(-1,24);ep.topMargin=dp(24);root.addView(eyebrow,ep);
-        TextView title=text(hasPin()?"Abrí tu bóveda":"Tu bóveda, bajo llave",27,Color.rgb(245,250,253),true); title.setGravity(Gravity.CENTER); LinearLayout.LayoutParams tp=lp(-1,-2);tp.topMargin=dp(4);root.addView(title,tp);
-        TextView intro=text(hasPin()?"Ingresá tu PIN para abrir tus archivos cifrados.":"Elegí un PIN. Tus fotos y videos se cifran en este dispositivo.",13,COLOR_MUTED,false); intro.setGravity(Gravity.CENTER); intro.setLineSpacing(dp(2),1f); LinearLayout.LayoutParams ip=lp(-1,-2);ip.topMargin=dp(8);ip.leftMargin=dp(6);ip.rightMargin=dp(6);root.addView(intro,ip);
-        dial=new DialView(this); LinearLayout.LayoutParams dp=lp(-1,230);dp.topMargin=dp(6);root.addView(dial,dp);
-        LinearLayout form=column(); pad(form,4,0,4,0);
-        LinearLayout labels=row(); TextView lab=text(hasPin()?"PIN DE LA BÓVEDA":"CREÁ UN PIN",11,Color.rgb(199,212,224),true); lab.setLetterSpacing(.06f);labels.addView(lab,new LinearLayout.LayoutParams(0,-2,1));labels.addView(text("6 A 10 DÍGITOS",9,Color.rgb(128,147,168),false));form.addView(labels,lp(-1,25));
-        pinField=pinInput("PIN de 6 a 10 dígitos"); LinearLayout.LayoutParams pp=lp(-1,54);pp.topMargin=dp(4);form.addView(pinField,pp);
-        confirmField=pinInput("Repetí el PIN");LinearLayout.LayoutParams cp=lp(-1,49);cp.topMargin=dp(10);if(hasPin())confirmField.setVisibility(View.GONE);form.addView(confirmField,cp);
-        actionButton=button(hasPin()?"Abrir bóveda":"Crear bóveda",true);LinearLayout.LayoutParams ap=lp(-1,50);ap.topMargin=dp(12);form.addView(actionButton,ap);actionButton.setOnClickListener(v->submitPin());
-        message=text(hasPin()?"Ingresá el PIN que elegiste.":"No uses el mismo PIN de desbloqueo del teléfono.",12,COLOR_MUTED,false);message.setGravity(Gravity.CENTER);message.setMinHeight(dp(38));LinearLayout.LayoutParams mp=lp(-1,-2);mp.topMargin=dp(8);form.addView(message,mp);
-        TextView caution=text("Fotos y videos se guardan cifrados dentro de la app. Los originales de la galería no se borran solos.",10,Color.rgb(101,119,139),false);caution.setGravity(Gravity.CENTER);caution.setLineSpacing(dp(2),1f);LinearLayout.LayoutParams np=lp(-1,-2);np.topMargin=dp(9);form.addView(caution,np);
-        root.addView(form,lp(-1,-2));
+        LinearLayout hero=column();
+        LinearLayout.LayoutParams hp=lp(-1,-2); hp.topMargin=dp(20); root.addView(hero,hp);
+        LinearLayout status=row();
+        TextView eyebrow=microLabel(hasPin()?"ACCESO RESTRINGIDO":"CONFIGURACIÓN INICIAL");
+        status.addView(eyebrow,new LinearLayout.LayoutParams(0,-2,1));
+        TextView tag=text("●  CIFRADO LOCAL",9,Color.rgb(224,190,127),true); tag.setLetterSpacing(.04f);
+        pad(tag,10,7,10,7); tag.setBackground(rounded(Color.rgb(37,33,25),Color.rgb(104,84,48),14)); status.addView(tag);
+        hero.addView(status,lp(-1,30));
+        TextView title=text(hasPin()?"Bóveda
+bajo llave":"Creá tu
+bóveda privada",31,Color.rgb(247,248,250),true);
+        title.setLineSpacing(-dp(2),1f); LinearLayout.LayoutParams tp=lp(-1,-2); tp.topMargin=dp(7); hero.addView(title,tp);
+        TextView intro=text(hasPin()?"Acceso personal. Solo se abre con tu PIN.":"Una capa privada para tus fotos y videos.",13,COLOR_MUTED,false);
+        LinearLayout.LayoutParams ip=lp(-1,-2); ip.topMargin=dp(6); hero.addView(intro,ip);
+
+        LinearLayout vaultPlate=column(); pad(vaultPlate,13,12,13,11);
+        vaultPlate.setBackground(gradient(Color.rgb(27,38,51),Color.rgb(12,19,29),Color.rgb(76,91,103),22));
+        vaultPlate.setElevation(dp(7));
+        LinearLayout plateHead=row();
+        TextView plateTitle=text("PUERTA DE SEGURIDAD",10,Color.rgb(220,226,230),true); plateTitle.setLetterSpacing(.13f);
+        plateHead.addView(plateTitle,new LinearLayout.LayoutParams(0,-2,1));
+        TextView bolt=text("●  ●  ●",8,Color.rgb(172,139,82),true); plateHead.addView(bolt);
+        vaultPlate.addView(plateHead,lp(-1,22));
+        dial=new DialView(this); LinearLayout.LayoutParams dlp=lp(-1,222); dlp.topMargin=dp(2); vaultPlate.addView(dial,dlp);
+        View divider=new View(this); divider.setBackgroundColor(Color.rgb(53,65,76)); LinearLayout.LayoutParams vlp=lp(-1,1); vlp.topMargin=dp(1); vaultPlate.addView(divider,vlp);
+        LinearLayout securityRow=row();
+        TextView sec=text("AES-256  ·  ARCHIVOS EN EL DISPOSITIVO",9,Color.rgb(161,176,188),true); sec.setLetterSpacing(.04f);
+        securityRow.addView(sec,new LinearLayout.LayoutParams(0,-2,1));
+        TextView seal=text("●",10,Color.rgb(115,224,177),true); securityRow.addView(seal);
+        LinearLayout.LayoutParams srp=lp(-1,24); srp.topMargin=dp(5); vaultPlate.addView(securityRow,srp);
+        LinearLayout.LayoutParams vp=lp(-1,-2); vp.topMargin=dp(15); root.addView(vaultPlate,vp);
+
+        LinearLayout form=column(); pad(form,15,13,15,13);
+        form.setBackground(gradient(Color.rgb(20,29,41),Color.rgb(13,19,28),Color.rgb(49,62,75),18));
+        LinearLayout labels=row();
+        TextView lab=text(hasPin()?"CLAVE DE ACCESO":"CREÁ TU PIN",10,Color.rgb(220,226,232),true); lab.setLetterSpacing(.12f);
+        labels.addView(lab,new LinearLayout.LayoutParams(0,-2,1));
+        TextView length=microLabel("6 — 10 DÍGITOS"); labels.addView(length);
+        form.addView(labels,lp(-1,23));
+        pinField=pinInput("●  ●  ●  ●  ●  ●"); LinearLayout.LayoutParams pp=lp(-1,54); pp.topMargin=dp(5); form.addView(pinField,pp);
+        confirmField=pinInput("Repetí tu PIN"); LinearLayout.LayoutParams cp=lp(-1,50); cp.topMargin=dp(9); if(hasPin()) confirmField.setVisibility(View.GONE); form.addView(confirmField,cp);
+        actionButton=button(hasPin()?"DESBLOQUEAR BÓVEDA":"CREAR MI BÓVEDA",true);
+        actionButton.setTextSize(13); actionButton.setLetterSpacing(.08f);
+        actionButton.setBackground(gradient(Color.rgb(246,212,145),Color.rgb(187,143,66),Color.rgb(255,230,178),14));
+        actionButton.setTextColor(Color.rgb(30,25,16));
+        LinearLayout.LayoutParams ap=lp(-1,52); ap.topMargin=dp(12); form.addView(actionButton,ap); actionButton.setOnClickListener(v->submitPin());
+        message=text(hasPin()?"Ingresá tu clave para abrir la puerta.":"Elegí un PIN distinto al del teléfono.",11,COLOR_MUTED,false);
+        message.setGravity(Gravity.CENTER); message.setMinHeight(dp(34)); LinearLayout.LayoutParams mp=lp(-1,-2); mp.topMargin=dp(5); form.addView(message,mp);
+        LinearLayout.LayoutParams fp=lp(-1,-2); fp.topMargin=dp(12); root.addView(form,fp);
+        TextView caution=text("Los originales no se eliminan automáticamente de la galería.",10,Color.rgb(115,130,146),false);
+        caution.setGravity(Gravity.CENTER); LinearLayout.LayoutParams np=lp(-1,-2); np.topMargin=dp(11); root.addView(caution,np);
     }
-    private EditText pinInput(String hint){EditText e=new EditText(this);e.setSingleLine(true);e.setTextSize(21);e.setTextColor(Color.rgb(245,250,253));e.setHintTextColor(Color.rgb(59,75,93));e.setHint(hint);e.setGravity(Gravity.CENTER);e.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_VARIATION_PASSWORD);e.setTransformationMethod(PasswordTransformationMethod.getInstance());e.setLetterSpacing(.32f);e.setBackground(rounded(Color.rgb(10,17,27),COLOR_LINE,14));e.setPadding(dp(12),0,dp(12),0);e.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(10)});return e;}
+    private EditText pinInput(String hint){EditText e=new EditText(this);e.setSingleLine(true);e.setTextSize(20);e.setTextColor(Color.rgb(245,250,253));e.setHintTextColor(Color.rgb(59,75,93));e.setHint(hint);e.setGravity(Gravity.CENTER);e.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_VARIATION_PASSWORD);e.setTransformationMethod(PasswordTransformationMethod.getInstance());e.setLetterSpacing(.32f);e.setBackground(gradient(Color.rgb(7,12,19),Color.rgb(14,21,30),Color.rgb(75,88,101),13));e.setPadding(dp(12),0,dp(12),0);e.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(10)});return e;}
     private void submitPin(){String p=pinField.getText().toString();if(!p.matches("[0-9]{6,10}")){setMessage("El PIN debe tener entre 6 y 10 números.",true);dial.playError();return;}if(!hasPin()){String c=confirmField.getText().toString();if(!p.equals(c)){setMessage("Los PIN no coinciden. Revisalos y volvé a probar.",true);dial.playError();return;}createPin(p);}else unlock(p);}
     private void setMessage(String s,boolean error){message.setText(s);message.setTextColor(error?Color.rgb(255,113,139):COLOR_MUTED);}
     private void createPin(String pin){try{ensureFileKey();byte[] salt=new byte[16];random.nextBytes(salt);byte[] hash=derive(pin,salt);getPreferences(MODE_PRIVATE).edit().putString(KEY_SALT,hex(salt)).putString(KEY_HASH,hex(hash)).apply();dial.playSuccess(()->runOnUiThread(()->showVault()));setMessage("PIN creado. Preparando bóveda…",false);}catch(Exception e){setMessage("No pude preparar el almacenamiento seguro. Probá de nuevo.",true);}}
@@ -150,14 +207,45 @@ public class MainActivity extends Activity {
     private byte[] unhex(String s){if(s==null||s.length()%2!=0)throw new IllegalArgumentException("bad hex");byte[] b=new byte[s.length()/2];for(int i=0;i<b.length;i++)b[i]=(byte)Integer.parseInt(s.substring(i*2,i*2+2),16);return b;}
     private SecretKey ensureFileKey()throws Exception{if(fileKey!=null)return fileKey;KeyStore ks=KeyStore.getInstance("AndroidKeyStore");ks.load(null);if(ks.containsAlias(KS_ALIAS)){fileKey=(SecretKey)ks.getKey(KS_ALIAS,null);return fileKey;}KeyGenerator kg=KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES,"AndroidKeyStore");kg.init(new KeyGenParameterSpec.Builder(KS_ALIAS,KeyProperties.PURPOSE_ENCRYPT|KeyProperties.PURPOSE_DECRYPT).setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).setKeySize(256).setRandomizedEncryptionRequired(true).build());fileKey=kg.generateKey();return fileKey;}
     private void showVault(){hideKeyboard();isUnlocked=true;buildVaultScreen();}
-    private void buildVaultScreen(){buildBase();buildBrand();LinearLayout top=row();LinearLayout tit=column();TextView h=text("Mi bóveda",27,Color.rgb(245,250,253),true);tit.addView(h);TextView desc=text("Tus archivos privados, en este dispositivo.",12,COLOR_MUTED,false);LinearLayout.LayoutParams dlp=lp(-1,-2);dlp.topMargin=dp(4);tit.addView(desc,dlp);top.addView(tit,new LinearLayout.LayoutParams(0,-2,1));fileCount=text("",10,Color.rgb(194,209,220),true);fileCount.setGravity(Gravity.CENTER);pad(fileCount,10,7,10,7);fileCount.setBackground(rounded(COLOR_PANEL,COLOR_LINE,11));top.addView(fileCount);root.addView(top,lp(-1,-2));
-        LinearLayout actions=row();Button add=button("＋  Agregar fotos o videos",true);LinearLayout.LayoutParams alp=new LinearLayout.LayoutParams(0,dp(48),1);alp.topMargin=dp(18);actions.addView(add,alp);Button close=button("Cerrar",false);LinearLayout.LayoutParams clp=lp(86,48);clp.leftMargin=dp(8);clp.topMargin=dp(18);actions.addView(close,clp);root.addView(actions,lp(-1,-2));
-        add.setOnClickListener(v->pickFiles());close.setOnClickListener(v->lockVault());
-        TextView notice=text("Importa una copia cifrada. El original seguirá en Fotos/Galería hasta que lo borres vos.",11,Color.rgb(153,171,190),false);notice.setLineSpacing(dp(2),1f);pad(notice,12,10,12,10);notice.setBackground(rounded(Color.rgb(13,23,34),COLOR_LINE,12));LinearLayout.LayoutParams nlp=lp(-1,-2);nlp.topMargin=dp(15);root.addView(notice,nlp);
-        vaultScroll=new ScrollView(this);vaultContent=column();LinearLayout.LayoutParams vslp=lp(-1,-2);vslp.topMargin=dp(12);root.addView(vaultScroll,vslp);vaultScroll.addView(vaultContent);
-        Button wipe=button("Borrar bóveda y archivos cifrados",false);wipe.setTextColor(Color.rgb(255,133,153));wipe.setBackground(rounded(Color.rgb(37,22,30),Color.rgb(87,48,61),13));LinearLayout.LayoutParams wlp=lp(-1,46);wlp.topMargin=dp(14);root.addView(wipe,wlp);wipe.setOnClickListener(v->confirmWipe());
-        TextView footer=text("✦  SESIÓN PRIVADA  ·  SE CIERRA AL SALIR",9,Color.rgb(103,120,140),true);footer.setGravity(Gravity.CENTER);LinearLayout.LayoutParams flp=lp(-1,38);root.addView(footer,flp);refreshFileList(fileCount);}
-    private void refreshFileList(TextView count){JSONArray files=readFiles();count.setText(files.length()+ (files.length()==1?" ARCHIVO":" ARCHIVOS"));vaultContent.removeAllViews();if(files.length()==0){TextView empty=text("Tu bóveda está vacía\nAgregá fotos o videos con el botón de arriba.",13,COLOR_MUTED,false);empty.setGravity(Gravity.CENTER);pad(empty,20,26,20,26);empty.setBackground(rounded(Color.rgb(13,20,30),COLOR_LINE,16));vaultContent.addView(empty,lp(-1,-2));return;}for(int i=0;i<files.length();i++){JSONObject item=files.optJSONObject(i);if(item==null)continue;LinearLayout card=row();card.setBackground(rounded(COLOR_PANEL,COLOR_LINE,15));pad(card,13,11,10,11);LinearLayout info=column();TextView name=text(item.optString("name","Archivo"),13,Color.rgb(227,237,244),true);name.setMaxLines(1);name.setEllipsize(android.text.TextUtils.TruncateAt.END);info.addView(name);TextView sub=text(item.optString("kind","Archivo")+" · "+formatSize(item.optLong("size",0))+" cifrado",10,COLOR_MUTED,false);LinearLayout.LayoutParams slp=lp(-1,-2);slp.topMargin=dp(5);info.addView(sub,slp);card.addView(info,new LinearLayout.LayoutParams(0,-2,1));Button open=smallButton("Abrir");card.addView(open,lp(62,40));String id=item.optString("id");open.setOnClickListener(v->openFile(id));Button delete=smallButton("×");LinearLayout.LayoutParams delp=lp(42,40);delp.leftMargin=dp(6);card.addView(delete,delp);delete.setOnClickListener(v->confirmDelete(id,item.optString("name","archivo"),count));LinearLayout.LayoutParams cp=lp(-1,-2);cp.bottomMargin=dp(9);vaultContent.addView(card,cp);}}
+    private void buildVaultScreen(){
+        buildBase(); buildBrand();
+        LinearLayout titleRow=row(); LinearLayout tit=column();
+        TextView h=text("Mi bóveda",29,Color.rgb(247,248,250),true); tit.addView(h);
+        TextView desc=text("ESPACIO PRIVADO  ·  SOLO EN ESTE DISPOSITIVO",9,Color.rgb(153,169,183),true); desc.setLetterSpacing(.06f);
+        LinearLayout.LayoutParams dlp=lp(-1,-2); dlp.topMargin=dp(4); tit.addView(desc,dlp);
+        titleRow.addView(tit,new LinearLayout.LayoutParams(0,-2,1));
+        fileCount=text("",9,Color.rgb(231,215,180),true); fileCount.setGravity(Gravity.CENTER); pad(fileCount,11,8,11,8);
+        fileCount.setBackground(rounded(Color.rgb(39,34,26),Color.rgb(102,82,48),12)); titleRow.addView(fileCount);
+        LinearLayout.LayoutParams trp=lp(-1,-2); trp.topMargin=dp(19); root.addView(titleRow,trp);
+
+        LinearLayout secureCard=row(); pad(secureCard,14,13,14,13);
+        secureCard.setBackground(gradient(Color.rgb(25,39,46),Color.rgb(15,25,32),Color.rgb(54,91,84),17));
+        TextView shield=text("⬡",23,Color.rgb(173,239,209),true); shield.setGravity(Gravity.CENTER); shield.setBackground(rounded(Color.rgb(26,59,52),Color.rgb(70,123,101),14)); secureCard.addView(shield,lp(44,44));
+        LinearLayout status=column(); pad(status,11,0,0,0);
+        TextView secureHead=text("BÓVEDA ACTIVA",11,Color.rgb(219,242,228),true); secureHead.setLetterSpacing(.08f); status.addView(secureHead);
+        TextView secureSub=text("Contenido cifrado localmente",10,Color.rgb(151,183,169),false); LinearLayout.LayoutParams ssp=lp(-1,-2); ssp.topMargin=dp(4); status.addView(secureSub,ssp);
+        secureCard.addView(status,new LinearLayout.LayoutParams(0,-2,1));
+        TextView lockBadge=text("●",11,Color.rgb(116,231,181),true); secureCard.addView(lockBadge);
+        LinearLayout.LayoutParams scp=lp(-1,-2); scp.topMargin=dp(16); root.addView(secureCard,scp);
+
+        LinearLayout actions=row();
+        Button add=button("＋   IMPORTAR ARCHIVOS",true); add.setTextSize(12); add.setLetterSpacing(.05f); add.setTextColor(Color.rgb(30,25,16));
+        add.setBackground(gradient(Color.rgb(246,212,145),Color.rgb(187,143,66),Color.rgb(255,230,178),14));
+        LinearLayout.LayoutParams alp=new LinearLayout.LayoutParams(0,dp(52),1); alp.topMargin=dp(15); actions.addView(add,alp);
+        Button close=button("CERRAR",false); close.setTextSize(10); close.setLetterSpacing(.04f); close.setBackground(gradient(Color.rgb(39,47,58),Color.rgb(20,27,36),Color.rgb(75,87,99),14));
+        LinearLayout.LayoutParams clp=lp(86,52); clp.leftMargin=dp(8); clp.topMargin=dp(15); actions.addView(close,clp); root.addView(actions,lp(-1,-2));
+        add.setOnClickListener(v->pickFiles()); close.setOnClickListener(v->lockVault());
+
+        TextView listTitle=text("TUS ARCHIVOS",10,Color.rgb(191,204,214),true); listTitle.setLetterSpacing(.14f);
+        LinearLayout.LayoutParams ltp=lp(-1,30); ltp.topMargin=dp(18); root.addView(listTitle,ltp);
+        vaultScroll=new ScrollView(this); vaultScroll.setClipToPadding(false); vaultContent=column(); LinearLayout.LayoutParams vslp=lp(-1,-2); root.addView(vaultScroll,vslp); vaultScroll.addView(vaultContent);
+        TextView warning=text("La copia original sigue en tu galería hasta que la borres.",10,Color.rgb(140,153,166),false); warning.setGravity(Gravity.CENTER); LinearLayout.LayoutParams wnlp=lp(-1,-2); wnlp.topMargin=dp(10); root.addView(warning,wnlp);
+        Button wipe=button("BORRAR TODOS LOS DATOS DE LA BÓVEDA",false); wipe.setTextSize(10); wipe.setLetterSpacing(.04f); wipe.setTextColor(Color.rgb(244,139,144)); wipe.setBackground(gradient(Color.rgb(48,28,34),Color.rgb(29,19,25),Color.rgb(104,55,63),13));
+        LinearLayout.LayoutParams wlp=lp(-1,44); wlp.topMargin=dp(15); root.addView(wipe,wlp); wipe.setOnClickListener(v->confirmWipe());
+        TextView footer=text("SESIÓN BLOQUEADA AUTOMÁTICAMENTE AL SALIR",9,Color.rgb(110,126,141),true); footer.setGravity(Gravity.CENTER); footer.setLetterSpacing(.04f); root.addView(footer,lp(-1,40));
+        refreshFileList(fileCount);
+    }
+    private void refreshFileList(TextView count){JSONArray files=readFiles();count.setText(files.length()+ (files.length()==1?" ARCHIVO":" ARCHIVOS"));vaultContent.removeAllViews();if(files.length()==0){TextView empty=text("◇\n\nTODAVÍA NO HAY ARCHIVOS\nImportá fotos o videos para cifrarlos dentro de la bóveda.",12,COLOR_MUTED,false);empty.setGravity(Gravity.CENTER);empty.setLineSpacing(dp(4),1f);pad(empty,20,31,20,31);empty.setBackground(gradient(Color.rgb(24,33,44),Color.rgb(13,19,28),Color.rgb(58,70,82),18));vaultContent.addView(empty,lp(-1,-2));return;}for(int i=0;i<files.length();i++){JSONObject item=files.optJSONObject(i);if(item==null)continue;LinearLayout card=row();card.setBackground(gradient(Color.rgb(29,39,51),Color.rgb(17,24,34),Color.rgb(58,70,83),16));card.setElevation(dp(3));pad(card,13,12,10,12);LinearLayout info=column();TextView name=text(item.optString("name","Archivo"),13,Color.rgb(227,237,244),true);name.setMaxLines(1);name.setEllipsize(android.text.TextUtils.TruncateAt.END);info.addView(name);TextView sub=text(item.optString("kind","Archivo").toUpperCase(Locale.ROOT)+"  ·  "+formatSize(item.optLong("size",0))+"  ·  AES-256",9,Color.rgb(156,174,188),true);LinearLayout.LayoutParams slp=lp(-1,-2);slp.topMargin=dp(5);info.addView(sub,slp);card.addView(info,new LinearLayout.LayoutParams(0,-2,1));Button open=smallButton("Abrir");card.addView(open,lp(62,40));String id=item.optString("id");open.setOnClickListener(v->openFile(id));Button delete=smallButton("×");LinearLayout.LayoutParams delp=lp(42,40);delp.leftMargin=dp(6);card.addView(delete,delp);delete.setOnClickListener(v->confirmDelete(id,item.optString("name","archivo"),count));LinearLayout.LayoutParams cp=lp(-1,-2);cp.bottomMargin=dp(9);vaultContent.addView(card,cp);}}
     private Button smallButton(String label){Button b=button(label,false);b.setTextSize(12);b.setPadding(0,0,0,0);return b;}
     private JSONArray readFiles(){try{return new JSONArray(getPreferences(MODE_PRIVATE).getString(KEY_FILES,"[]"));}catch(Exception e){return new JSONArray();}}
     private void writeFiles(JSONArray a){getPreferences(MODE_PRIVATE).edit().putString(KEY_FILES,a.toString()).apply();}
@@ -186,12 +274,41 @@ public class MainActivity extends Activity {
         private int dp(float value){return (int)(value*getResources().getDisplayMetrics().density+0.5f);}
         void playError(){state=1;invalidate();h.postDelayed(()->{state=0;invalidate();},900);}
         void playSuccess(Runnable r){state=2;done=r;angle=0;scale=.78f;invalidate();post(new Runnable(){long start=System.currentTimeMillis();public void run(){float t=Math.min(1f,(System.currentTimeMillis()-start)/700f);angle=720*t;scale=.78f+.22f*t;invalidate();if(t<1f)postDelayed(this,16);else{postDelayed(()->{state=0;invalidate();if(done!=null){Runnable x=done;done=null;x.run();}},180);}}});}
-        @Override protected void onDraw(Canvas canvas){super.onDraw(canvas);float cx=getWidth()/2f,cy=getHeight()/2f-3;float r=Math.min(dp(88),Math.min(getWidth()/2f-dp(10),getHeight()/2f-dp(27)));if(r<dp(50))r=dp(50);canvas.save();if(state==1){float shake=(float)Math.sin(System.currentTimeMillis()*.08)*dp(5);canvas.translate(shake,0);postInvalidateDelayed(16);}canvas.scale(scale,scale,cx,cy);
-            p.setStyle(Paint.Style.FILL);p.setColor(Color.rgb(16,27,41));p.setShadowLayer(dp(18),0,0,0x553de8d3);canvas.drawCircle(cx,cy,r,p);p.clearShadowLayer();p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(dp(1.5f));p.setColor(state==1?Color.rgb(255,96,125):0x8865F0D6);canvas.drawCircle(cx,cy,r,p);p.setStrokeWidth(dp(1));p.setColor(0x447FFFE7);canvas.drawCircle(cx,cy,r-dp(8),p);
-            if(state!=2){p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(dp(4));p.setStrokeCap(Paint.Cap.ROUND);p.setColor(state==1?Color.rgb(255,110,137):COLOR_MINT);canvas.drawArc(cx-r+dp(1),cy-r+dp(1),cx+r-dp(1),cy+r-dp(1),-94+(state==1?20:0),102,false,p);for(int i=0;i<8;i++){double a=Math.toRadians(i*45+angle-90);float x=(float)(cx+Math.cos(a)*(r-dp(3))),y=(float)(cy+Math.sin(a)*(r-dp(3)));p.setStyle(Paint.Style.FILL);p.setColor(state==1?Color.rgb(255,110,137):COLOR_MINT);canvas.drawCircle(x,y,dp(3.5f),p);} }
-            float cr=r*.66f;p.setStyle(Paint.Style.FILL);p.setColor(state==2?Color.rgb(88,226,196):(state==1?Color.rgb(44,30,43):Color.rgb(25,47,59)));canvas.drawCircle(cx,cy,cr,p);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(dp(1));p.setColor(state==2?0xffc2fff2:0x557fffe7);canvas.drawCircle(cx,cy,cr,p);
-            if(state==2){p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(dp(5));p.setStrokeCap(Paint.Cap.ROUND);p.setStrokeJoin(Paint.Join.ROUND);p.setColor(Color.rgb(6,34,30));Path path=new Path();path.moveTo(cx-cr*.36f,cy);path.lineTo(cx-cr*.08f,cy+cr*.28f);path.lineTo(cx+cr*.42f,cy-cr*.27f);canvas.drawPath(path,p);}else drawLock(canvas,cx,cy,cr,state==1?Color.rgb(255,125,149):Color.rgb(149,248,232));
-            canvas.restore();p.setStyle(Paint.Style.FILL);p.setTextAlign(Paint.Align.CENTER);p.setTypeface(Typeface.create("sans-serif",Typeface.BOLD));p.setTextSize(dp(10));p.setColor(state==2?Color.rgb(175,255,239):(state==1?Color.rgb(255,135,155):Color.rgb(145,165,185)));canvas.drawText(state==2?"IDENTIDAD VERIFICADA":(state==1?"PIN INCORRECTO":"ESPERANDO TU PIN"),cx,cy+r+dp(22),p);}
+        @Override protected void onDraw(Canvas canvas){
+            super.onDraw(canvas);
+            float cx=getWidth()/2f,cy=getHeight()/2f-dp(5);
+            float r=Math.min(dp(83),Math.min(getWidth()/2f-dp(8),getHeight()/2f-dp(31)));
+            if(r<dp(48))r=dp(48);
+            canvas.save();
+            if(state==1){float shake=(float)Math.sin(System.currentTimeMillis()*.08)*dp(5);canvas.translate(shake,0);postInvalidateDelayed(16);}
+            canvas.scale(scale,scale,cx,cy);
+            // Deeply inset steel housing, concentric machined rings and metallic bevels.
+            p.setStyle(Paint.Style.FILL);p.setColor(Color.rgb(8,13,20));p.setShadowLayer(dp(12),0,dp(5),0x99000000);canvas.drawCircle(cx,cy,r+dp(8),p);p.clearShadowLayer();
+            p.setShader(new android.graphics.RadialGradient(cx-r*.22f,cy-r*.28f,r*1.6f,new int[]{Color.rgb(75,87,98),Color.rgb(35,45,56),Color.rgb(12,18,26)},null,android.graphics.Shader.TileMode.CLAMP));canvas.drawCircle(cx,cy,r+dp(6),p);p.setShader(null);
+            p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(dp(2));p.setColor(Color.rgb(116,128,137));canvas.drawCircle(cx,cy,r+dp(5),p);
+            p.setStrokeWidth(dp(1));p.setColor(Color.rgb(24,32,41));canvas.drawCircle(cx,cy,r+dp(1),p);
+            p.setStyle(Paint.Style.FILL);
+            for(int i=0;i<8;i++){double a=Math.toRadians(i*45-90);float bx=(float)(cx+Math.cos(a)*(r+dp(5))),by=(float)(cy+Math.sin(a)*(r+dp(5)));p.setColor(i%2==0?Color.rgb(157,165,165):Color.rgb(47,56,65));canvas.drawCircle(bx,by,dp(3),p);p.setColor(Color.rgb(30,36,42));canvas.drawCircle(bx,by,dp(1),p);}
+            p.setShader(new android.graphics.RadialGradient(cx-r*.2f,cy-r*.26f,r*1.5f,new int[]{Color.rgb(57,68,78),Color.rgb(31,41,52),Color.rgb(16,23,32)},null,android.graphics.Shader.TileMode.CLAMP));canvas.drawCircle(cx,cy,r-dp(5),p);p.setShader(null);
+            p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(dp(1.2f));p.setColor(Color.rgb(111,124,132));canvas.drawCircle(cx,cy,r-dp(5),p);p.setColor(Color.rgb(12,18,25));canvas.drawCircle(cx,cy,r-dp(11),p);
+            // Machined tick marks around the steel rim.
+            for(int i=0;i<60;i++){double a=Math.toRadians(i*6-90);float outer=r-dp(13);float inner=outer-dp(i%5==0?8:3);p.setStrokeWidth(dp(i%5==0?1.4f:.7f));p.setColor(i%5==0?Color.rgb(213,186,130):Color.rgb(105,119,129));canvas.drawLine((float)(cx+Math.cos(a)*inner),(float)(cy+Math.sin(a)*inner),(float)(cx+Math.cos(a)*outer),(float)(cy+Math.sin(a)*outer),p);}
+            float ring=r*.69f;
+            p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(dp(5));p.setColor(state==1?Color.rgb(255,91,112):Color.rgb(127,105,64));canvas.drawArc(cx-ring,cy-ring,cx+ring,cy+ring,-91,359,false,p);
+            p.setStrokeWidth(dp(2));p.setColor(state==1?Color.rgb(255,123,139):Color.rgb(232,197,126));canvas.drawArc(cx-ring+dp(3),cy-ring+dp(3),cx+ring-dp(3),cy+ring-dp(3),-94+(state==1?18:0),104,false,p);
+            if(state!=2){for(int i=0;i<10;i++){double a=Math.toRadians(i*36+angle-90);float x=(float)(cx+Math.cos(a)*ring),y=(float)(cy+Math.sin(a)*ring);p.setStyle(Paint.Style.FILL);p.setColor(i%2==0?Color.rgb(233,198,126):Color.rgb(112,87,50));canvas.drawCircle(x,y,dp(3.2f),p);p.setColor(Color.rgb(255,226,160));canvas.drawCircle(x-dp(1),y-dp(1),dp(1),p);}}
+            float cr=r*.48f;p.setStyle(Paint.Style.FILL);p.setShader(new android.graphics.RadialGradient(cx-cr*.3f,cy-cr*.35f,cr*1.8f,new int[]{Color.rgb(72,86,96),Color.rgb(27,38,49),Color.rgb(10,16,24)},null,android.graphics.Shader.TileMode.CLAMP));canvas.drawCircle(cx,cy,cr,p);p.setShader(null);
+            p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(dp(2));p.setColor(state==1?Color.rgb(222,83,105):Color.rgb(207,173,110));canvas.drawCircle(cx,cy,cr,p);p.setStrokeWidth(dp(1));p.setColor(Color.rgb(102,116,125));canvas.drawCircle(cx,cy,cr-dp(5),p);
+            // Safe-door handle spokes and central lock / verified mark.
+            p.setStrokeCap(Paint.Cap.ROUND);p.setStrokeWidth(dp(4));p.setColor(Color.rgb(150,160,164));
+            for(int i=0;i<3;i++){double a=Math.toRadians(i*120+angle*.15-90);float x1=(float)(cx+Math.cos(a)*cr*.60),y1=(float)(cy+Math.sin(a)*cr*.60),x2=(float)(cx+Math.cos(a)*cr*.86),y2=(float)(cy+Math.sin(a)*cr*.86);canvas.drawLine(x1,y1,x2,y2,p);p.setStyle(Paint.Style.FILL);p.setColor(Color.rgb(74,84,91));canvas.drawCircle(x2,y2,dp(4),p);p.setStyle(Paint.Style.STROKE);p.setColor(Color.rgb(170,177,175));canvas.drawCircle(x2,y2,dp(4),p);p.setColor(Color.rgb(150,160,164));}
+            p.setStyle(Paint.Style.FILL);p.setColor(state==2?Color.rgb(101,220,178):(state==1?Color.rgb(58,31,38):Color.rgb(20,32,43)));canvas.drawCircle(cx,cy,cr*.42f,p);
+            p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(dp(1.3f));p.setColor(state==2?Color.rgb(192,255,227):Color.rgb(136,151,159));canvas.drawCircle(cx,cy,cr*.42f,p);
+            if(state==2){p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(dp(4));p.setStrokeCap(Paint.Cap.ROUND);p.setStrokeJoin(Paint.Join.ROUND);p.setColor(Color.rgb(9,43,35));Path path=new Path();path.moveTo(cx-cr*.20f,cy);path.lineTo(cx-cr*.04f,cy+cr*.16f);path.lineTo(cx+cr*.24f,cy-cr*.17f);canvas.drawPath(path,p);}else drawLock(canvas,cx,cy,cr*.50f,state==1?Color.rgb(255,132,146):Color.rgb(226,202,155));
+            canvas.restore();
+            p.setStyle(Paint.Style.FILL);p.setTextAlign(Paint.Align.CENTER);p.setTypeface(Typeface.create("sans-serif-condensed",Typeface.BOLD));p.setTextSize(dp(9));p.setColor(state==2?Color.rgb(174,246,211):(state==1?Color.rgb(255,138,151):Color.rgb(197,204,208)));
+            canvas.drawText(state==2?"IDENTIDAD VERIFICADA":(state==1?"CÓDIGO RECHAZADO":"ESPERANDO TU PIN"),cx,cy+r+dp(20),p);
+        }
         private void drawLock(Canvas c,float x,float y,float r,int color){p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(dp(3));p.setStrokeCap(Paint.Cap.ROUND);p.setColor(color);c.drawArc(x-r*.3f,y-r*.55f,x+r*.3f,y+r*.1f,180,180,false,p);c.drawRoundRect(x-r*.38f,y-r*.08f,x+r*.38f,y+r*.48f,dp(5),dp(5),p);p.setStyle(Paint.Style.FILL);c.drawCircle(x,y+r*.12f,dp(2),p);c.drawRect(x-dp(1),y+r*.12f,x+dp(1),y+r*.28f,p);}
     }
 }

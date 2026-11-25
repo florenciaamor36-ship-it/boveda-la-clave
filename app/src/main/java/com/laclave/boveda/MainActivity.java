@@ -152,9 +152,7 @@ public class MainActivity extends Activity {
         TextView tag=text("●  CIFRADO LOCAL",9,Color.rgb(224,190,127),true); tag.setLetterSpacing(.04f);
         pad(tag,10,7,10,7); tag.setBackground(rounded(Color.rgb(37,33,25),Color.rgb(104,84,48),14)); status.addView(tag);
         hero.addView(status,lp(-1,30));
-        TextView title=text(hasPin()?"Bóveda
-bajo llave":"Creá tu
-bóveda privada",31,Color.rgb(247,248,250),true);
+        TextView title=text(hasPin()?"Bóveda\\nbajo llave":"Creá tu\\nbóveda privada",31,Color.rgb(247,248,250),true);
         title.setLineSpacing(-dp(2),1f); LinearLayout.LayoutParams tp=lp(-1,-2); tp.topMargin=dp(7); hero.addView(title,tp);
         TextView intro=text(hasPin()?"Acceso personal. Solo se abre con tu PIN.":"Una capa privada para tus fotos y videos.",13,COLOR_MUTED,false);
         LinearLayout.LayoutParams ip=lp(-1,-2); ip.topMargin=dp(6); hero.addView(intro,ip);
